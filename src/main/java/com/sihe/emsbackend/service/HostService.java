@@ -81,5 +81,10 @@ public class HostService {
         return hostRepository.save(existingHost);
     }
 
+    
+public Optional<Host> getHostByEmail(String email) {
+    return hostRepository.findByEmail(email);
+}
+
 
 }
