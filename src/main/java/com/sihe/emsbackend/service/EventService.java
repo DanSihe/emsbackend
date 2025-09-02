@@ -6,6 +6,7 @@ import com.sihe.emsbackend.repository.EventRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EventService {
@@ -30,4 +31,16 @@ public class EventService {
     public List<Event> getEventsByHost(Host host) {
         return eventRepository.findByHostId(host.getId());
     }
+
+    // --- Add these methods ---
+    public Optional<Event> getEventById(Long id) {
+        return eventRepository.findById(id);
+    }
+
+    public void deleteEvent(Event event) {
+        eventRepository.delete(event);
+    }
+    public List<Event> getEventsByHostId(Long hostId) {
+    return eventRepository.findByHostId(hostId);
+}
 }
