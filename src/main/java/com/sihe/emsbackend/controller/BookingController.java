@@ -8,6 +8,8 @@ import com.sihe.emsbackend.repository.BookingRepository;
 import com.sihe.emsbackend.repository.EventRepository;
 import com.sihe.emsbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -80,4 +82,36 @@ public class BookingController {
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
     }
+
+    @DeleteMapping("/{bookingId}")
+public ResponseEntity<String> cancelBooking(
+        @PathVariable Long bookingId) {
+
+    Optional<Booking> optBooking =
+            bookingRepository.findById(bookingId);
+
+    if (optBooking.isEmpty()) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body("Booking not found");
+    }
+
+    Booking booking = optBooking.get();
+
+    Event event = booking.getEvent();
+
+    // Restore tickets
+    event.setTicketQuantity(
+            event.getTicketQuantity()
+                    + booking.getQuantity()
+    );
+
+    eventRepository.save(event);
+
+    bookingRepository.delete(booking);
+
+    return ResponseEntity.ok(
+            "Booking cancelled successfully"
+    );
+}
 }

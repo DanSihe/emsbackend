@@ -79,5 +79,14 @@ public ResponseEntity<Event> getEvent(@PathVariable Long id) {
             .orElse(ResponseEntity.notFound().build());
 }
 
+@GetMapping("/my-events")
+public ResponseEntity<List<Event>> getMyEvents(@RequestParam String email) {
+    List<Event> events = eventService.getEventsByUserEmail(email);
+    return ResponseEntity.ok(events);
+}
+
+
+
+
 
 }

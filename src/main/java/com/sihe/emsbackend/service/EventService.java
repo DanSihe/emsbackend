@@ -43,4 +43,8 @@ public class EventService {
     public List<Event> getEventsByHostId(Long hostId) {
     return eventRepository.findByHostId(hostId);
 }
+
+public List<Event> getEventsByUserEmail(String email) {
+    return eventRepository.findByUserEmail(email);
+}
 }

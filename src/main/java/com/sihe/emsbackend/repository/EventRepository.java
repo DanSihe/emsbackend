@@ -11,4 +11,5 @@ import java.util.List;
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByHost(Host host);
      List<Event> findByHostId(Long hostId);
+     List<Event> findByUserEmail(String email);
 }
