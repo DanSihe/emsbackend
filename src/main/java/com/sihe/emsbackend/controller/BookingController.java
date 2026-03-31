@@ -10,8 +10,10 @@ import com.sihe.emsbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -29,45 +31,108 @@ public class BookingController {
     private UserRepository userRepository;
 
     @PostMapping
-    public Booking createBooking(@RequestBody BookingRequest request) {
+    @Transactional // CRITICAL: Ensures atomic operation (prevents partial updates)
+    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
+
         Optional<Event> optEvent = eventRepository.findById(request.getEventId());
         Optional<User> optUser = userRepository.findById(request.getUserId());
 
         if (optEvent.isEmpty() || optUser.isEmpty()) {
-            throw new RuntimeException("Invalid event or user");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid event or user");
         }
 
         Event event = optEvent.get();
         User user = optUser.get();
 
-        if (request.getQuantity() > event.getTicketQuantity()) {
-            throw new RuntimeException("Not enough tickets available");
+        // Validate Quantity
+        if (request.getQuantity() <= 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be at least 1");
         }
 
-        // Reduce ticket quantity
+        if (request.getQuantity() > event.getTicketQuantity()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not enough tickets available");
+        }
+
+        // 1. Update Event Inventory
         event.setTicketQuantity(event.getTicketQuantity() - request.getQuantity());
         eventRepository.save(event);
 
-        // Create booking
+        // 2. Create and Save Booking
         Booking booking = new Booking();
         booking.setEvent(event);
         booking.setUser(user);
         booking.setQuantity(request.getQuantity());
+
+        // Calculate total price on backend for security
         booking.setTotalPrice(event.getTicketPrice() * request.getQuantity());
 
-        return bookingRepository.save(booking);
+        bookingRepository.save(booking);
+
+        return ResponseEntity.ok(toBookingResponse(booking));
     }
 
-    // Get all bookings for a user
     @GetMapping("/user/{userId}")
-    public java.util.List<Booking> getBookingsByUser(@PathVariable Long userId) {
-        Optional<User> optUser = userRepository.findById(userId);
-        if (optUser.isEmpty()) throw new RuntimeException("User not found");
-
-        return bookingRepository.findByUser(optUser.get());
+    public ResponseEntity<?> getBookingsByUser(@PathVariable Long userId) {
+        return userRepository.findById(userId)
+                .map(user -> ResponseEntity.ok(bookingRepository.findByUser(user)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    // DTO for request
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<Object> getBookingById(@PathVariable Long bookingId) {
+        Optional<Booking> optBooking = bookingRepository.findById(bookingId);
+
+        if (optBooking.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found");
+        }
+
+        return ResponseEntity.ok(toBookingResponse(optBooking.get()));
+    }
+
+    @DeleteMapping("/{bookingId}")
+    @Transactional
+    public ResponseEntity<String> cancelBooking(@PathVariable Long bookingId) {
+        Optional<Booking> optBooking = bookingRepository.findById(bookingId);
+
+        if (optBooking.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found");
+        }
+
+        Booking booking = optBooking.get();
+        Event event = booking.getEvent();
+
+        // Restore tickets
+        event.setTicketQuantity(event.getTicketQuantity() + booking.getQuantity());
+        eventRepository.save(event);
+        bookingRepository.delete(booking);
+
+        return ResponseEntity.ok("Booking cancelled successfully");
+    }
+
+    private BookingResponse toBookingResponse(Booking booking) {
+        Event event = booking.getEvent();
+        User user = booking.getUser();
+
+        return new BookingResponse(
+                booking.getId(),
+                event.getId(),
+                event.getTitle(),
+                event.getCategory(),
+                event.getDate(),
+                event.getLocation(),
+                event.getImageUrl(),
+                booking.getQuantity(),
+                event.getTicketPrice(),
+                booking.getTotalPrice(),
+                event.getTicketQuantity(),
+                booking.getCreatedAt(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                "CONFIRMED"
+        );
+    }
+
     public static class BookingRequest {
         private Long eventId;
         private Long userId;
@@ -75,43 +140,81 @@ public class BookingController {
 
         public Long getEventId() { return eventId; }
         public void setEventId(Long eventId) { this.eventId = eventId; }
-
         public Long getUserId() { return userId; }
         public void setUserId(Long userId) { this.userId = userId; }
-
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
     }
 
-    @DeleteMapping("/{bookingId}")
-public ResponseEntity<String> cancelBooking(
-        @PathVariable Long bookingId) {
+    public static class BookingResponse {
+        private Long bookingId;
+        private Long eventId;
+        private String eventTitle;
+        private String category;
+        private Object eventDate;
+        private String location;
+        private String imageUrl;
+        private Integer quantity;
+        private Double ticketPrice;
+        private Double totalPrice;
+        private Integer remainingTickets;
+        private Object bookedAt;
+        private String firstName;
+        private String lastName;
+        private String email;
+        private String status;
 
-    Optional<Booking> optBooking =
-            bookingRepository.findById(bookingId);
+        public BookingResponse(
+                Long bookingId,
+                Long eventId,
+                String eventTitle,
+                String category,
+                Object eventDate,
+                String location,
+                String imageUrl,
+                Integer quantity,
+                Double ticketPrice,
+                Double totalPrice,
+                Integer remainingTickets,
+                Object bookedAt,
+                String firstName,
+                String lastName,
+                String email,
+                String status
+        ) {
+            this.bookingId = bookingId;
+            this.eventId = eventId;
+            this.eventTitle = eventTitle;
+            this.category = category;
+            this.eventDate = eventDate;
+            this.location = location;
+            this.imageUrl = imageUrl;
+            this.quantity = quantity;
+            this.ticketPrice = ticketPrice;
+            this.totalPrice = totalPrice;
+            this.remainingTickets = remainingTickets;
+            this.bookedAt = bookedAt;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = email;
+            this.status = status;
+        }
 
-    if (optBooking.isEmpty()) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body("Booking not found");
+        public Long getBookingId() { return bookingId; }
+        public Long getEventId() { return eventId; }
+        public String getEventTitle() { return eventTitle; }
+        public String getCategory() { return category; }
+        public Object getEventDate() { return eventDate; }
+        public String getLocation() { return location; }
+        public String getImageUrl() { return imageUrl; }
+        public Integer getQuantity() { return quantity; }
+        public Double getTicketPrice() { return ticketPrice; }
+        public Double getTotalPrice() { return totalPrice; }
+        public Integer getRemainingTickets() { return remainingTickets; }
+        public Object getBookedAt() { return bookedAt; }
+        public String getFirstName() { return firstName; }
+        public String getLastName() { return lastName; }
+        public String getEmail() { return email; }
+        public String getStatus() { return status; }
     }
-
-    Booking booking = optBooking.get();
-
-    Event event = booking.getEvent();
-
-    // Restore tickets
-    event.setTicketQuantity(
-            event.getTicketQuantity()
-                    + booking.getQuantity()
-    );
-
-    eventRepository.save(event);
-
-    bookingRepository.delete(booking);
-
-    return ResponseEntity.ok(
-            "Booking cancelled successfully"
-    );
-}
 }

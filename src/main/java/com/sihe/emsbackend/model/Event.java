@@ -26,6 +26,10 @@ public class Event {
     @JoinColumn(name = "host_id")
     private Host host;
 
+    private String  userEmail;
+
+
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -56,4 +60,7 @@ public class Event {
 
     public Host getHost() { return host; }
     public void setHost(Host host) { this.host = host; }
+
+
+
 }

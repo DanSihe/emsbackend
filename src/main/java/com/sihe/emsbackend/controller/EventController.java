@@ -1,7 +1,11 @@
 package com.sihe.emsbackend.controller;
 
+import com.sihe.emsbackend.model.Booking;
 import com.sihe.emsbackend.model.Event;
 import com.sihe.emsbackend.model.Host;
+import com.sihe.emsbackend.model.User;
+import com.sihe.emsbackend.repository.BookingRepository;
+import com.sihe.emsbackend.repository.UserRepository;
 import com.sihe.emsbackend.service.EventService;
 import com.sihe.emsbackend.service.HostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +23,16 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:3000")
 public class EventController {
 
+    private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+
     private final EventService eventService;
     private final HostService hostService;
 
     @Autowired
-    public EventController(EventService eventService, HostService hostService) {
+    public EventController(UserRepository userRepository, BookingRepository bookingRepository, EventService eventService, HostService hostService) {
+        this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
         this.eventService = eventService;
         this.hostService = hostService;
     }
@@ -79,11 +88,13 @@ public ResponseEntity<Event> getEvent(@PathVariable Long id) {
             .orElse(ResponseEntity.notFound().build());
 }
 
-@GetMapping("/my-events")
-public ResponseEntity<List<Event>> getMyEvents(@RequestParam String email) {
-    List<Event> events = eventService.getEventsByUserEmail(email);
-    return ResponseEntity.ok(events);
-}
+    @GetMapping("/my-events")
+    public List<Booking> getBookingsByUserEmail(@RequestParam String email) {
+        Optional<Object> optUser = userRepository.findByEmail(email);
+        if (optUser.isEmpty()) throw new RuntimeException("User not found");
+
+        return bookingRepository.findByUser((User) optUser.get());
+    }
 
 
 
