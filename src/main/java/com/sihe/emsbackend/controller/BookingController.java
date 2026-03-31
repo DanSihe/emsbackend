@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,10 +102,17 @@ public class BookingController {
         Booking booking = optBooking.get();
         Event event = booking.getEvent();
 
-        // Restore tickets
-        event.setTicketQuantity(event.getTicketQuantity() + booking.getQuantity());
-        eventRepository.save(event);
-        bookingRepository.delete(booking);
+        if ("CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            event.setTicketQuantity(event.getTicketQuantity() + booking.getQuantity());
+            eventRepository.save(event);
+        }
+
+        booking.setStatus("CANCELLED");
+        booking.setRefundStatus("PENDING");
+        booking.setRefundAmount(booking.getTotalPrice());
+        booking.setNotificationMessage("Your booking was cancelled. Refund is now pending review.");
+        booking.setCancelledAt(LocalDateTime.now());
+        bookingRepository.save(booking);
 
         return ResponseEntity.ok("Booking cancelled successfully");
     }
@@ -129,7 +137,7 @@ public class BookingController {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
-                "CONFIRMED"
+                booking.getStatus()
         );
     }
 

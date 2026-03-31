@@ -2,6 +2,7 @@ package com.sihe.emsbackend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 public class Event {
@@ -21,6 +22,9 @@ public class Event {
 
     private Integer ticketQuantity;   // NEW FIELD
     private Double ticketPrice;       // NEW FIELD
+    private String status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "host_id")
@@ -61,6 +65,30 @@ public class Event {
     public Host getHost() { return host; }
     public void setHost(Host host) { this.host = host; }
 
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (status == null || status.isBlank()) {
+            status = "ACTIVE";
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        if (status == null || status.isBlank()) {
+            status = "ACTIVE";
+        }
+    }
 
 }

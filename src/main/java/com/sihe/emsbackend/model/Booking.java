@@ -24,10 +24,23 @@ public class Booking {
     private Double totalPrice;
 
     private LocalDateTime createdAt;
+    private String status;
+    private String refundStatus;
+    private Double refundAmount;
+    private String cancellationReason;
+    private String notificationMessage;
+    private LocalDateTime cancelledAt;
+    private LocalDateTime refundedAt;
 
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
+        if (status == null || status.isBlank()) {
+            status = "CONFIRMED";
+        }
+        if (refundStatus == null || refundStatus.isBlank()) {
+            refundStatus = "NOT_REQUIRED";
+        }
     }
 
     // Getters and setters
@@ -48,4 +61,25 @@ public class Booking {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getRefundStatus() { return refundStatus; }
+    public void setRefundStatus(String refundStatus) { this.refundStatus = refundStatus; }
+
+    public Double getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(Double refundAmount) { this.refundAmount = refundAmount; }
+
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+
+    public String getNotificationMessage() { return notificationMessage; }
+    public void setNotificationMessage(String notificationMessage) { this.notificationMessage = notificationMessage; }
+
+    public LocalDateTime getCancelledAt() { return cancelledAt; }
+    public void setCancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; }
+
+    public LocalDateTime getRefundedAt() { return refundedAt; }
+    public void setRefundedAt(LocalDateTime refundedAt) { this.refundedAt = refundedAt; }
 }

@@ -1,5 +1,6 @@
 package com.sihe.emsbackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,7 +27,9 @@ public class Host {
 
     private String eventCategory;
 
+    @JsonIgnore
     private String password;
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
