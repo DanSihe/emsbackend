@@ -3,6 +3,10 @@ package com.sihe.emsbackend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 public class Booking {
@@ -20,6 +24,8 @@ public class Booking {
     private User user;
 
     private Integer quantity;
+    @Column(length = 1000)
+    private String seatNumbers;
 
     private Double totalPrice;
 
@@ -55,6 +61,21 @@ public class Booking {
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public String getSeatNumbers() { return seatNumbers; }
+    public void setSeatNumbers(String seatNumbers) { this.seatNumbers = seatNumbers; }
+
+    @Transient
+    public List<String> getSeatNumberList() {
+        if (seatNumbers == null || seatNumbers.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(seatNumbers.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toList());
+    }
 
     public Double getTotalPrice() { return totalPrice; }
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }

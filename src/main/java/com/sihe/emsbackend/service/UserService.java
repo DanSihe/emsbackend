@@ -27,7 +27,7 @@ public class UserService {
     }
 
     public User login(LoginRequest loginRequest) {
-        User user = (User) userRepository.findByEmail(loginRequest.getEmail())
+        User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (!encoder.matches(loginRequest.getPassword(), user.getPassword())) {
@@ -35,6 +35,11 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
     
 }

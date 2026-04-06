@@ -7,6 +7,7 @@ import com.sihe.emsbackend.model.User;
 import com.sihe.emsbackend.repository.BookingRepository;
 import com.sihe.emsbackend.repository.EventRepository;
 import com.sihe.emsbackend.repository.UserRepository;
+import com.sihe.emsbackend.service.SeatLayoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,9 @@ public class BookingController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SeatLayoutService seatLayoutService;
+
     @PostMapping
     @Transactional // CRITICAL: Ensures atomic operation (prevents partial updates)
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
@@ -44,28 +48,36 @@ public class BookingController {
 
         Event event = optEvent.get();
         User user = optUser.get();
+        List<String> assignedSeats;
 
         // Validate Quantity
         if (request.getQuantity() <= 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be at least 1");
         }
 
-        if (request.getQuantity() > event.getTicketQuantity()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not enough tickets available");
+        try {
+            assignedSeats = seatLayoutService.assignRequestedSeats(
+                    event,
+                    request.getQuantity(),
+                    request.getSelectedSeats()
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         }
 
         // 1. Update Event Inventory
-        event.setTicketQuantity(event.getTicketQuantity() - request.getQuantity());
+        event.setTicketQuantity(event.getTicketQuantity() - assignedSeats.size());
         eventRepository.save(event);
 
         // 2. Create and Save Booking
         Booking booking = new Booking();
         booking.setEvent(event);
         booking.setUser(user);
-        booking.setQuantity(request.getQuantity());
+        booking.setQuantity(assignedSeats.size());
+        booking.setSeatNumbers(String.join(",", assignedSeats));
 
         // Calculate total price on backend for security
-        booking.setTotalPrice(event.getTicketPrice() * request.getQuantity());
+        booking.setTotalPrice(event.getTicketPrice() * assignedSeats.size());
 
         bookingRepository.save(booking);
 
@@ -77,6 +89,13 @@ public class BookingController {
         return userRepository.findById(userId)
                 .map(user -> ResponseEntity.ok(bookingRepository.findByUser(user)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @GetMapping("/layout/{eventId}")
+    public ResponseEntity<Object> getSeatLayout(@PathVariable Long eventId) {
+        return eventRepository.findById(eventId)
+                .<ResponseEntity<Object>>map(event -> ResponseEntity.ok(seatLayoutService.buildSeatLayout(event)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event not found"));
     }
 
     @GetMapping("/{bookingId}")
@@ -137,7 +156,8 @@ public class BookingController {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
-                booking.getStatus()
+                booking.getStatus(),
+                booking.getSeatNumberList()
         );
     }
 
@@ -145,6 +165,7 @@ public class BookingController {
         private Long eventId;
         private Long userId;
         private Integer quantity;
+        private List<String> selectedSeats;
 
         public Long getEventId() { return eventId; }
         public void setEventId(Long eventId) { this.eventId = eventId; }
@@ -152,6 +173,8 @@ public class BookingController {
         public void setUserId(Long userId) { this.userId = userId; }
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public List<String> getSelectedSeats() { return selectedSeats; }
+        public void setSelectedSeats(List<String> selectedSeats) { this.selectedSeats = selectedSeats; }
     }
 
     public static class BookingResponse {
@@ -171,6 +194,7 @@ public class BookingController {
         private String lastName;
         private String email;
         private String status;
+        private List<String> selectedSeats;
 
         public BookingResponse(
                 Long bookingId,
@@ -188,7 +212,8 @@ public class BookingController {
                 String firstName,
                 String lastName,
                 String email,
-                String status
+                String status,
+                List<String> selectedSeats
         ) {
             this.bookingId = bookingId;
             this.eventId = eventId;
@@ -206,6 +231,7 @@ public class BookingController {
             this.lastName = lastName;
             this.email = email;
             this.status = status;
+            this.selectedSeats = selectedSeats;
         }
 
         public Long getBookingId() { return bookingId; }
@@ -224,5 +250,6 @@ public class BookingController {
         public String getLastName() { return lastName; }
         public String getEmail() { return email; }
         public String getStatus() { return status; }
+        public List<String> getSelectedSeats() { return selectedSeats; }
     }
 }

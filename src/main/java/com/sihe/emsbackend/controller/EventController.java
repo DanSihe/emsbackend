@@ -8,6 +8,7 @@ import com.sihe.emsbackend.repository.BookingRepository;
 import com.sihe.emsbackend.repository.UserRepository;
 import com.sihe.emsbackend.service.EventService;
 import com.sihe.emsbackend.service.HostService;
+import com.sihe.emsbackend.service.SeatLayoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +29,15 @@ public class EventController {
 
     private final EventService eventService;
     private final HostService hostService;
+    private final SeatLayoutService seatLayoutService;
 
     @Autowired
-    public EventController(UserRepository userRepository, BookingRepository bookingRepository, EventService eventService, HostService hostService) {
+    public EventController(UserRepository userRepository, BookingRepository bookingRepository, EventService eventService, HostService hostService, SeatLayoutService seatLayoutService) {
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.eventService = eventService;
         this.hostService = hostService;
+        this.seatLayoutService = seatLayoutService;
     }
 
     // Create a new event
@@ -88,12 +91,19 @@ public ResponseEntity<Event> getEvent(@PathVariable Long id) {
             .orElse(ResponseEntity.notFound().build());
 }
 
+    @GetMapping("/{id}/seat-layout")
+    public ResponseEntity<?> getSeatLayout(@PathVariable Long id) {
+        return eventService.getEventById(id)
+                .<ResponseEntity<?>>map(event -> ResponseEntity.ok(seatLayoutService.buildSeatLayout(event)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event not found"));
+    }
+
     @GetMapping("/my-events")
     public List<Booking> getBookingsByUserEmail(@RequestParam String email) {
-        Optional<Object> optUser = userRepository.findByEmail(email);
+        Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) throw new RuntimeException("User not found");
 
-        return bookingRepository.findByUser((User) optUser.get());
+        return bookingRepository.findByUser(optUser.get());
     }
 
 

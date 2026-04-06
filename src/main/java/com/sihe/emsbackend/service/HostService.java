@@ -2,6 +2,8 @@ package com.sihe.emsbackend.service;
 
 import com.sihe.emsbackend.model.Host;
 import com.sihe.emsbackend.repository.HostRepository;
+import com.sihe.emsbackend.exception.InvalidCredentialsException;
+import com.sihe.emsbackend.exception.UserNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +53,17 @@ public class HostService {
             }
         }
         return Optional.empty();
+    }
+
+    public Host loginOrThrow(String email, String rawPassword) {
+        Host host = hostRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Host not found"));
+
+        if (!passwordEncoder.matches(rawPassword, host.getPassword())) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        return host;
     }
 
 
