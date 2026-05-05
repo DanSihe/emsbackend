@@ -19,12 +19,13 @@ public class EventService {
 
     // Create or save event
     public Event createEvent(Event event) {
+        event.setApprovalStatus("PENDING");
         return eventRepository.save(event);
     }
 
     // Get all events
     public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+        return eventRepository.findByApprovalStatusAndStatus("APPROVED", "ACTIVE");
     }
 
     // Get events by host

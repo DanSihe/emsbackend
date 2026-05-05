@@ -10,6 +10,8 @@ import java.util.List;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByHost(Host host);
-     List<Event> findByHostId(Long hostId);
-     List<Event> findByUserEmail(String email);
+    List<Event> findByHostId(Long hostId);
+    List<Event> findByUserEmail(String email);
+    List<Event> findByApprovalStatus(String approvalStatus);
+    List<Event> findByApprovalStatusAndStatus(String approvalStatus, String status);
 }

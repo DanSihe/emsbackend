@@ -23,6 +23,7 @@ public class Event {
     private Integer ticketQuantity;   // NEW FIELD
     private Double ticketPrice;       // NEW FIELD
     private String status;
+    private String approvalStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -68,6 +69,9 @@ public class Event {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -81,6 +85,9 @@ public class Event {
         if (status == null || status.isBlank()) {
             status = "ACTIVE";
         }
+        if (approvalStatus == null || approvalStatus.isBlank()) {
+            approvalStatus = "PENDING";
+        }
     }
 
     @PreUpdate
@@ -88,6 +95,9 @@ public class Event {
         updatedAt = LocalDateTime.now();
         if (status == null || status.isBlank()) {
             status = "ACTIVE";
+        }
+        if (approvalStatus == null || approvalStatus.isBlank()) {
+            approvalStatus = "PENDING";
         }
     }
 

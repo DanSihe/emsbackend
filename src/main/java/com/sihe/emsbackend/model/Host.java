@@ -26,6 +26,7 @@ public class Host {
     private LocalDate dateOfBirth;
 
     private String eventCategory;
+    private String approvalStatus;
 
     @JsonIgnore
     private String password;
@@ -33,6 +34,12 @@ public class Host {
     public String getPassword() {
         return password;
     }
-// <-- Add password field
+
+    @PrePersist
+    public void onCreate() {
+        if (approvalStatus == null || approvalStatus.isBlank()) {
+            approvalStatus = "PENDING";
+        }
+    }
 
 }

@@ -2,6 +2,7 @@ package com.sihe.emsbackend.service;
 
 import com.sihe.emsbackend.dto.MfaChallengeResponse;
 import com.sihe.emsbackend.exception.InvalidCredentialsException;
+import com.sihe.emsbackend.model.Admin;
 import com.sihe.emsbackend.model.Host;
 import com.sihe.emsbackend.model.MfaChallenge;
 import com.sihe.emsbackend.model.User;
@@ -38,6 +39,10 @@ public class MfaService {
 
     public MfaChallengeResponse createChallengeForHost(Host host) {
         return createChallenge("HOST", host.getId(), host.getEmail());
+    }
+
+    public MfaChallengeResponse createChallengeForAdmin(Admin admin) {
+        return createChallenge("ADMIN", admin.getId(), admin.getEmail());
     }
 
     public void verifyChallengeOrThrow(String challengeId, String code, String principalType, Long principalId) {
@@ -97,7 +102,8 @@ public class MfaService {
                 maskEmail(email),
                 deliveryMode.equals("EMAIL")
                         ? "A verification code was sent to your email."
-                        : "Mail delivery is in demo mode. Check the backend console for the verification code."
+                        : "Mail delivery is in demo mode. Use the code shown below to continue.",
+                code
         );
     }
 

@@ -35,4 +35,12 @@ public class User {
     private String nickname;
     private String phone;
     private String gender;
+    private String approvalStatus;
+
+    @PrePersist
+    public void onCreate() {
+        if (approvalStatus == null || approvalStatus.isBlank()) {
+            approvalStatus = "PENDING";
+        }
+    }
 }

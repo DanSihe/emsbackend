@@ -8,16 +8,25 @@ public class MfaChallengeResponse {
     private String deliveryMode;
     private String maskedEmail;
     private String message;
+    private String demoCode;
 
     public MfaChallengeResponse() {
     }
 
-    public MfaChallengeResponse(String challengeId, LocalDateTime expiresAt, String deliveryMode, String maskedEmail, String message) {
+    public MfaChallengeResponse(
+            String challengeId,
+            LocalDateTime expiresAt,
+            String deliveryMode,
+            String maskedEmail,
+            String message,
+            String demoCode
+    ) {
         this.challengeId = challengeId;
         this.expiresAt = expiresAt;
         this.deliveryMode = deliveryMode;
         this.maskedEmail = maskedEmail;
         this.message = message;
+        this.demoCode = demoCode;
     }
 
     public String getChallengeId() {
@@ -58,5 +67,13 @@ public class MfaChallengeResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getDemoCode() {
+        return demoCode;
+    }
+
+    public void setDemoCode(String demoCode) {
+        this.demoCode = demoCode;
     }
 }

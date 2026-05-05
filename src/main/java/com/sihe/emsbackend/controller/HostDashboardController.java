@@ -94,6 +94,7 @@ public class HostDashboardController {
         event.setImageUrl(updatedEvent.getImageUrl());
         event.setTicketPrice(updatedEvent.getTicketPrice());
         event.setTicketQuantity(updatedEvent.getTicketQuantity());
+        event.setApprovalStatus("PENDING");
         if (updatedEvent.getStatus() != null && !updatedEvent.getStatus().isBlank()) {
             event.setStatus(updatedEvent.getStatus());
         }

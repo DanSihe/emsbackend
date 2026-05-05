@@ -23,6 +23,7 @@ public class UserService {
         }
 
         user.setPassword(encoder.encode(user.getPassword()));
+        user.setApprovalStatus("APPROVED");
         return userRepository.save(user);
     }
 
@@ -32,6 +33,10 @@ public class UserService {
 
         if (!encoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        if ("REJECTED".equalsIgnoreCase(user.getApprovalStatus())) {
+            throw new InvalidCredentialsException("Your account was blocked by the admin");
         }
 
         return user;

@@ -35,6 +35,7 @@ public class HostService {
 
         // ✅ Correct usage — hash the password from the host object
         host.setPassword(passwordEncoder.encode(host.getPassword()));
+        host.setApprovalStatus("PENDING");
 
         return hostRepository.save(host);
     }
@@ -61,6 +62,13 @@ public class HostService {
 
         if (!passwordEncoder.matches(rawPassword, host.getPassword())) {
             throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        if (!"APPROVED".equalsIgnoreCase(host.getApprovalStatus())) {
+            if ("REJECTED".equalsIgnoreCase(host.getApprovalStatus())) {
+                throw new InvalidCredentialsException("Your host account was rejected by the admin");
+            }
+            throw new InvalidCredentialsException("Your host account is still pending admin approval");
         }
 
         return host;
