@@ -12,7 +12,7 @@ public class NotificationService {
             String refundStatus
     ) {
         return String.format(
-                "Hello %s, your booking for \"%s\" was updated. Refund status: %s. Refund amount: %.2f.",
+                "Hello %s, \"%s\" has been cancelled by the host. Please wait while your refund is processed. Refund status: %s. Refund amount: %.2f.",
                 customerName,
                 eventTitle,
                 refundStatus,
